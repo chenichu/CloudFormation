@@ -1,0 +1,9 @@
+Resources:
+  Ec2Instance: # Logical Name
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0e6d2e8684d4ccb3e # ImageID for us-east-1
+      Tags:
+        - Key: Name
+          Value: A simple example
