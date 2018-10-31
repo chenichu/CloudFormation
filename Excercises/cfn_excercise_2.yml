@@ -60,8 +60,16 @@ Resources:
       Tags:
         - Key: Name
           Value: 'IGW for MyVPC'
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref MyVPC
   PublicRoute:
     Type: AWS::EC2::Route
+    DependsOn:
+      - InternetGateway
+      - VPCGatewayAttachment
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
