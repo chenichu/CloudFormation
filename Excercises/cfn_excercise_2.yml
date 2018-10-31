@@ -1,5 +1,8 @@
 ###     CloudFormation Excercise 2 ### 
 # 1. Create VPC with two public and private subnets
+# NB: AssignIpv6AddressOnCreation should only be used in conjunction with Ipv6CidrBlock
+# NB: When creating an IGW, ensure to attach it to the VPC first i.e. 'VPCGatewayAttachment' 
+# NB: After the attachment Public Route will need a DependsOn Attribute for both IGW and VPCGatewayAttachment
 Resources:
   MyVPC:
     Type: AWS::EC2::VPC
