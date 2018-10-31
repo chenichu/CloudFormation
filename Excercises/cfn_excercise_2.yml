@@ -14,7 +14,6 @@ Resources:
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      AssignIpv6AddressOnCreation: false
       CidrBlock: 10.0.0.0/24
       MapPublicIpOnLaunch: true
       VpcId: !Ref MyVPC
@@ -24,7 +23,6 @@ Resources:
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      AssignIpv6AddressOnCreation: false
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       VpcId: !Ref MyVPC
@@ -34,7 +32,6 @@ Resources:
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      AssignIpv6AddressOnCreation: false
       CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: false
       VpcId: !Ref MyVPC
@@ -44,7 +41,6 @@ Resources:
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      AssignIpv6AddressOnCreation: false
       CidrBlock: 10.0.3.0/24
       MapPublicIpOnLaunch: false
       VpcId: !Ref MyVPC
@@ -75,7 +71,7 @@ Resources:
   NatGateway:
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt EIP4Gateway.AllocationId
+      AllocationId: !GetAtt EIP4NatGateway.AllocationId
       SubnetId: !Ref PublicSubnet1
       Tags:
         - Key: Name
