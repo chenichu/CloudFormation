@@ -12,13 +12,14 @@
   * 2 Private subnets with Internet Routing through the NAT instance.
   * Bonus point 1: use a map to select the AMI for the NAT instance
   * Bonus point 2: use conditions to create 3 subnets in regions that have 3 AZs or more
+  * Bonus: Try and compare NAT Instance and NAT Gatway setup
 
 # Excercise 3 - Create a template with:
   * 1 ELB
   * 2 Instance using stock AMZN Linux AMI
     * On the instance install Apache and PHP using cfn-init (UserData+AWS::CloudFormation ::Init)
     * Use a WaitCondition to signal success on the instance.
-  * Bonus: Replace teh static instance with ASG 
+  * Bonus: Replace the static instance with ASG 
     * Same as before using cfn-init to setup the instance 
     * Use a creation policy instead of a WaitCondition to signal success
     * Ensure you have all the alarms and scale policies
