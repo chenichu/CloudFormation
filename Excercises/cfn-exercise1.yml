@@ -1,0 +1,39 @@
+Parameters:
+  KeyName:
+    Description: 'The EC2 Key Pair to allows SSH access to the instance'
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: FirstKeyPair
+  AmiId:
+    Description: 'AMI Id in a particular region'
+    Type: String
+    Default: ami-0922553b7b0369273
+  Cidr:
+    Description: 'CIDR for security ingress rule'
+    Type: String
+    Default: 0.0.0.0/0
+Resources:
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: 'cfn excercise 1 SG'
+      GroupDescription: 'Security Group for cfn excercise 1'
+      VpcId: 'vpc-48fb8b30'
+      SecurityGroupIngress:
+        -
+          IpProtocol: 'tcp'
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref Cidr
+      Tags:
+        -
+          Key: 'Name'
+          Value: 'Test tag for excercise 1'
+  MyEC2Instance:
+    Type: AWS::EC2::Instance 
+    Properties:
+      SecurityGroupIds: 
+        - !Ref MySecurityGroup
+      InstanceType: t2.micro
+      ImageId: !Ref AmiId
+      KeyName: !Ref KeyName
+
