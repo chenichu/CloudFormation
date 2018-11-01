@@ -1,4 +1,4 @@
-###     CloudFormation Excercise 2 ### 
+###     CloudFormation Excercise 2 with NAT Gateway   ### 
 # 1. Create VPC with two public and private subnets
 # NB: AssignIpv6AddressOnCreation should only be used in conjunction with Ipv6CidrBlock
 # NB: When creating an IGW, ensure to attach it to the VPC first i.e. 'VPCGatewayAttachment' 

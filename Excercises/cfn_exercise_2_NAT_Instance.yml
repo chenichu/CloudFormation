@@ -1,0 +1,201 @@
+###     CloudFormation Excercise 2 with NAT Instance   ### 
+Mappings:
+  RegionMap:
+    us-east-1:
+      amzn-ami-vpc-nat: 'ami-0422d936d535c63b1'
+    eu-west-1:
+      amzn-ami-vpc-nat: 'ami-0ea87e2bfa81ca08a'
+#Conditions:
+  # Condition to check if subnet in Region is greater than 3 (i.e. if AZ returned is not 1 or 2)
+  #CreateThirdSubnets: !GetAZs !Ref AWS::Region
+Parameters:
+  NatInstanceAmi:
+    Type: String
+    Default: ami-0422d936d535c63b1 # us-east-1 -> amzn-ami-vpc-nat-hvm-2018.03.0.20180811-x86_64-ebs
+  KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: FirstKeyPair
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: "VPC created by CFN"
+  # Creating Public Subnets
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Select [0, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: 'Public Subnet 1'
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Select [1, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: 'Public Subnet 2'
+  #PublicSubnet3:
+  #  Type: AWS::EC2::Subnet
+  #  Properties:
+  #    CidrBlock: !Select [4, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+  #    Condition: !Ref CreateThirdSubnets
+  #    MapPublicIpOnLaunch: true
+  #    VpcId: !Ref MyVPC
+  #    Tags:
+  #      - Key: Name
+  #        Value: 'Public Subnet 3'
+  # Creating Private Subnets
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Select [2, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: 'Private Subnet 1'
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Select [3, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: 'Private Subnet 2'
+  # Create IGW and attach it to the VPC
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: 'IGW for MyVPC'
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref MyVPC
+  # Create Public Route Table and Routes
+  # Associate Public RouteTable with Public Subnets
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: 'Public Route Table'
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - VPCGatewayAttachment
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+  # NAT Instance is an EC2 AMI with names starting with 'amzn-ami-vpc-nat'
+  # Read more about NAT Instance -> https://docs.aws.amazon.com/vpc/latest/userguide/VPC_NAT_Instance.html
+  NatSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: 'NatSecurityGroup'
+      GroupDescription: 'Security Group for NAT Instance'
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        -
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - 
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Select [2, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+        -
+          IpProtocol: "tcp"
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Select [2, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+        - 
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Select [3, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+        -
+          IpProtocol: "tcp"
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Select [3, !Cidr [ !GetAtt MyVPC.CidrBlock, 4, 8]]
+      SecurityGroupEgress:
+        - 
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        -
+          IpProtocol: "tcp"
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+  NatInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      #ImageId: !Ref NatInstanceAmi
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", 'amzn-ami-vpc-nat']
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPair
+      SecurityGroupIds:
+        - !Ref NatSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      SourceDestCheck: 'false'
+  EIP4Nat:
+    Type: AWS::EC2::EIP 
+    Properties:
+      InstanceId: !Ref NatInstance
+  # Create Private Route Table
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: 'Private Route Table'
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+     DestinationCidrBlock: 0.0.0.0/0
+     InstanceId: !Ref NatInstance
+     RouteTableId: !Ref PrivateRouteTable
+  # Associate Private Route Table with Private Subnet
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet2
+
