@@ -1,0 +1,42 @@
+Parameters:
+  AmiId:
+    Type: String
+    Default: 'ami-0922553b7b0369273'
+  MyKeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: FirstKeyPair
+Resources:
+  BasicHTTPSG:
+    Type: AWS::EC2::SecurityGroup 
+    Properties:
+      GroupName: 'BasicSG'
+      GroupDescription: 'Basic SG allow HTTP and SSH'
+      SecurityGroupIngress:
+        - 
+          IpProtocol: 'tcp'
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - 
+          IpProtocol: 'tcp'
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+  EC2Instance1:
+    Type: AWS::EC2::Instance 
+    Properties: 
+      ImageId: !Ref AmiId
+      InstanceType: t2.micro
+      KeyName: !Ref MyKeyPair
+      Tags:
+        - Key: Name 
+          Value: 'First EC2 Instance'
+      SecurityGroups: 
+        - !Ref BasicHTTPSG
+      UserData:
+        !Base64 |
+        #!/bin/bash -xe
+        yum update -y
+        yum install httpd -y
+        echo 'Hello World!' >> /var/www/html/index.html
+        service httpd start
